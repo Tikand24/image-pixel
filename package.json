@@ -1,0 +1,39 @@
+{
+  "name": "image-pixel",
+  "version": "0.1.0",
+  "description": "Animate an image by revealing it as pixel quadrants on a canvas",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown && node scripts/fix-dts.mjs",
+    "dev": "tsdown --watch",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "canvas",
+    "pixel",
+    "animation",
+    "image",
+    "typescript"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "tsdown": "^0.12.6",
+    "typescript": "^5.7.0"
+  }
+}

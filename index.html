@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <div class="container-img">
+    <img src="./image-default.jpg" id="imagePreviewSource" alt="imagePreview" width="300px" height="600px" class="" />
+    <canvas id="testImageCanva" class="canvas"></canvas>
+  </div>
+  <div class="w-full space-y-4">
+    <!-- Control de velocidad -->
+    <div class="space-y-2">
+      <label class="text-white text-sm font-medium">Velocidad de partículas</label>
+      <div class="flex items-center space-x-3">
+        <input type="range" id="particle-speed" min="10" max="200" value="50" step="10"
+          class="flex-1 h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer slider" />
+        <span id="speed-value" class="text-white text-sm font-mono min-w-[3rem]">200ms</span>
+      </div>
+    </div>
+
+    <!-- Control de número de cuadrantes -->
+    <div class="space-y-2">
+      <label class="text-white text-sm font-medium">Número de particulas</label>
+      <div class="flex items-center space-x-3">
+        <input type="range" id="quadrant-number" min="4" max="100" value="4" step="4"
+          class="flex-1 h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer slider" />
+        <span id="quadrant-value" class="text-white text-sm font-mono min-w-[1rem]">4</span>
+      </div>
+    </div>
+  </div>
+  <button id="applyPreview" class="bg-blue-500 text-white px-4 py-2 rounded-md">Apply Preview</button>
+</body>
+<script>
+  let quadrantNumber = 4;
+  const numeroParticulas = document.getElementById('quadrant-number');
+  if (numeroParticulas) {
+    quadrantNumber = parseInt(numeroParticulas.getAttribute('value') || '4');
+  }
+  const grid = [];
+  let ctx = null;
+  const png = new Image();
+  png.crossOrigin = 'anonymous';
+  const drawScene = () => {
+    const canvas = document.getElementById(
+      'testImageCanva'
+    );
+    if (canvas) {
+      const ctx2 = canvas.getContext('2d');
+      if (ctx2) {
+        ctx = ctx2;
+        const displayWidth = 150;
+        const displayHeight = 150;
+        canvas.width = png.width;
+        canvas.height = png.height;
+        ctx2.drawImage(png, 0, 0, displayWidth, displayHeight);
+        const data = ctx2.getImageData(0, 0, displayWidth, displayHeight);
+        ctx2.clearRect(0, 0, canvas.width, canvas.height);
+
+        const particles = [];
+        for (let y = 0, y2 = data.height; y < y2; y++) {
+          for (let x = 0, x2 = data.width; x < x2; x++) {
+            const pixelIndex = y * 4 * data.width + x * 4 + 3;
+            const particle = {
+              x: x,
+              y: y,
+              color: `rgba(${data.data[pixelIndex + 1]},${data.data[pixelIndex + 2]
+                },${data.data[pixelIndex + 3]},${data.data[pixelIndex + 4]})`,
+            };
+            particles.push(particle);
+          }
+        }
+        const quarterNumber = quadrantNumber;
+        const pixelWidth = parseInt(`${data.width / quarterNumber}`);
+        const pixelHeight = parseInt(`${data.height / quarterNumber}`);
+        let pxielWidthVariant = 0;
+        let pxielheightVariant = 0;
+        for (let index = 1; index <= quarterNumber; index++) {
+          pxielWidthVariant = 0;
+          for (let index2 = 1; index2 <= quarterNumber; index2++) {
+            const cuadrant = [];
+            for (let i = 0, j = particles.length; i < j; i++) {
+              const particle = particles[i];
+              if (
+                particle.x >= pxielWidthVariant &&
+                particle.x <= pxielWidthVariant + pixelWidth &&
+                particle.y >= pxielheightVariant &&
+                particle.y <= pxielheightVariant + pixelHeight
+              ) {
+                cuadrant.push(particle);
+              }
+            }
+            grid.push(cuadrant);
+            pxielWidthVariant = pxielWidthVariant + pixelWidth;
+          }
+          pxielheightVariant = pxielheightVariant + pixelHeight;
+        }
+      }
+    }
+  };
+
+  const applyPreview = () => {
+    // Resetear valores
+    grid.length = 0; // Limpiar el array de cuadrantes
+
+    // Obtener valores actuales de los controles
+    const speed = document.getElementById('particle-speed');
+    const quadrantControl = document.getElementById('quadrant-number');
+
+    let delay = 50;
+    if (speed) {
+      delay = parseInt(speed.value || '50');
+    }
+
+    // Actualizar el número de cuadrantes
+    if (quadrantControl) {
+      quadrantNumber = parseInt(quadrantControl.value || '4');
+    }
+
+    // Limpiar el canvas
+    if (ctx) {
+      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    }
+
+    // Redibujar la escena con los nuevos valores
+    drawScene();
+
+    // Iniciar la animación después de un pequeño delay
+    setTimeout(() => {
+      const idInterval = setInterval(() => {
+        if (grid.length <= 0) {
+          clearInterval(idInterval);
+        } else {
+          handleAddGrid();
+        }
+      }, delay);
+    }, 100);
+  };
+
+  const handleAddGrid = () => {
+    if (grid.length <= 0) return;
+    const indexRandom = Math.floor(Math.random() * grid.length);
+    const quadrant = grid[indexRandom];
+    if (!quadrant) return;
+    if (!ctx) return;
+    for (let index2 = 0; index2 < quadrant.length; index2++) {
+      const particle = quadrant[index2];
+      ctx.fillStyle = particle.color;
+      ctx.fillRect(particle.x, particle.y, 1, 1);
+    }
+    grid.splice(indexRandom, 1);
+  };
+  setTimeout(() => {
+    png.onload = drawScene;
+    const imagePreviewSource = document.getElementById('imagePreviewSource');
+    if (imagePreviewSource) {
+      png.src = imagePreviewSource.getAttribute('src') || '';
+      png.height = parseInt(imagePreviewSource.getAttribute('height') || '600');
+      png.width = parseInt(imagePreviewSource.getAttribute('width') || '300');
+    }
+  }, 100);
+  document
+    .getElementById('applyPreview')
+    ?.addEventListener('click', applyPreview);
+
+  // Configuración de los inputs range
+  const particleSpeed = document.getElementById('particle-speed');
+  const speedValue = document.getElementById('speed-value');
+  const quadrantNumberControl = document.getElementById('quadrant-number');
+  const quadrantValue = document.getElementById('quadrant-value');
+
+  // Actualizar valores mostrados
+  function updateSpeedValue() {
+    if (speedValue && particleSpeed) {
+      speedValue.textContent = `${particleSpeed.value}ms`;
+    }
+  }
+
+  function updateQuadrantValue() {
+    if (quadrantValue && quadrantNumberControl) {
+      quadrantValue.textContent = quadrantNumberControl.value;
+    }
+  }
+
+  // Event listeners para los inputs range
+  particleSpeed?.addEventListener('input', updateSpeedValue);
+  quadrantNumberControl?.addEventListener('input', updateQuadrantValue);
+
+  // Inicializar valores
+  updateSpeedValue();
+  updateQuadrantValue();
+</script>
+<style>
+  .container-img {
+    display: flex;
+    flex-direction: row;
+  }
+
+  .canvas {
+    margin-left: 20px;
+    width: 300px;
+    height: 600px;
+  }
+</style>
+
+</html>
