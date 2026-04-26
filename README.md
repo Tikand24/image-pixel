@@ -106,7 +106,7 @@ import type { ImagePixelOptions, ImagePixelInstance } from 'image-pixel'
 Clone the repo and install dependencies:
 
 ```bash
-git clone https://github.com/your-username/image-pixel
+git clone https://github.com/Tikand24/image-pixel.git
 cd image-pixel
 npm install
 ```
